@@ -8,7 +8,7 @@
 - Détection des **égalités** ⚖️
 - **Notifications** de fin de jeu avec options pour rejouer ou revenir au menu principal 🔄
 - Interface graphique simple et intuitive 🖥️
-- Créé par **alexis_dpt_on_github** (suivez-le sur GitHub !) 👨‍💻
+- Créé par **alexis_dpt** 👨‍💻
 
 ## Requirements 📦
 - Python 3.x 🐍
