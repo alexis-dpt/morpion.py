@@ -17,7 +17,7 @@
 ## Installation ⚙️
 1. Clonez ce repo sur votre machine :
    ```bash
-   git clone https://github.com/alexis_dpt_on_github/Morpion.Py.git
+   git clone https://github.com/alexis-dpt/morpion.py.git
    ```
 2. Installez les dépendances :
    ```bash
