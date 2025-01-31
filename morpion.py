@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 
 Créateur = "alexis_dpt_on_github"
 print(Créateur)
@@ -32,10 +33,56 @@ def verifier_victoire():
         return True
     return False
 
+def verifier_egalite():
+    return all(grille[row][col] is not None for row in range(3) for col in range(3))
+
+def minimax(grille, profondeur, maximizer):
+    if verifier_victoire():
+        return 1 if maximizer else -1
+    if verifier_egalite():
+        return 0
+    if maximizer:
+        best_score = -float('inf')
+        for row in range(3):
+            for col in range(3):
+                if grille[row][col] is None:
+                    grille[row][col] = "O"
+                    score = minimax(grille, profondeur + 1, False)
+                    grille[row][col] = None
+                    best_score = max(score, best_score)
+        return best_score
+    else:
+        best_score = float('inf')
+        for row in range(3):
+            for col in range(3):
+                if grille[row][col] is None:
+                    grille[row][col] = "X"
+                    score = minimax(grille, profondeur + 1, True)
+                    grille[row][col] = None
+                    best_score = min(score, best_score)
+        return best_score
+
+def coup_ordinateur():
+    best_score = -float('inf')
+    best_move = None
+    for row in range(3):
+        for col in range(3):
+            if grille[row][col] is None:
+                grille[row][col] = "O"
+                score = minimax(grille, 0, False)
+                grille[row][col] = None
+                if score > best_score:
+                    best_score = score
+                    best_move = (row, col)
+    return best_move
+
 def afficher_notification(gagnant):
     fenetre.fill((0, 0, 0))
     font = pygame.font.Font(None, 60)
-    texte = font.render(f"Joueur {gagnant} a gagné!", True, (255, 255, 255))
+    if gagnant == "égalité":
+        texte = font.render("Match nul!", True, (255, 255, 255))
+    else:
+        texte = font.render(f"Joueur {gagnant} a gagné!", True, (255, 255, 255))
     fenetre.blit(texte, (taille_fenetre // 2 - texte.get_width() // 2, taille_fenetre // 2 - texte.get_height() // 2 - 50))
     
     bouton_rejouer = pygame.Rect(taille_fenetre // 2 - 100, taille_fenetre // 2 + 20, 200, 50)
@@ -62,38 +109,6 @@ def afficher_notification(gagnant):
                 if bouton_rejouer.collidepoint(event.pos):
                     return "rejouer"
                 elif bouton_menu.collidepoint(event.pos):
-                    return "menu"
-
-def afficher_égalité():
-    while True:
-        fenetre.fill((0, 0, 0))
-        font = pygame.font.Font(None, 60)
-        texte = font.render("Égalité!", True, (255, 255, 255))
-        fenetre.blit(texte, (taille_fenetre // 2 - texte.get_width() // 2, taille_fenetre // 2 - texte.get_height() // 2 - 50))
-
-        bouton_rejouer = pygame.Rect(taille_fenetre // 2 - 100, taille_fenetre // 2 + 20, 200, 50)
-        bouton_menu = pygame.Rect(taille_fenetre // 2 - 100, taille_fenetre // 2 + 80, 200, 50)
-
-        pygame.draw.rect(fenetre, (255, 0, 0), bouton_rejouer)
-        pygame.draw.rect(fenetre, (0, 255, 0), bouton_menu)
-
-        font = pygame.font.Font(None, 36)
-        texte_rejouer = font.render("Rejouer", True, (255, 255, 255))
-        texte_menu = font.render("Menu principal", True, (255, 255, 255))
-
-        fenetre.blit(texte_rejouer, (bouton_rejouer.x + (200 - texte_rejouer.get_width()) // 2, bouton_rejouer.y + 10))
-        fenetre.blit(texte_menu, (bouton_menu.x + (200 - texte_menu.get_width()) // 2, bouton_menu.y + 10))
-
-        pygame.display.update()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if bouton_rejouer.collidepoint(event.pos):
-                    return "rejouer"
-                if bouton_menu.collidepoint(event.pos):
                     return "menu"
 
 def afficher_menu_principal():
@@ -136,7 +151,7 @@ def afficher_menu_modes():
     
     font = pygame.font.Font(None, 30)
     texte_mode1 = font.render("Humain vs Humain", True, (255, 255, 255))
-    texte_mode2 = font.render("Humain vs Ordinateur (bientôt)", False, (255, 255, 255))
+    texte_mode2 = font.render("Humain vs Ordinateur", True, (255, 255, 255))
     
     fenetre.blit(texte_mode1, (bouton_mode1.x + (200 - texte_mode1.get_width()) // 2, bouton_mode1.y + 10))
     fenetre.blit(texte_mode2, (bouton_mode2.x + (200 - texte_mode2.get_width()) // 2, bouton_mode2.y + 10))
@@ -152,8 +167,7 @@ def afficher_menu_modes():
                 if bouton_mode1.collidepoint(event.pos):
                     return "mode1"
                 elif bouton_mode2.collidepoint(event.pos):
-                    print("Pas le temps de coder l'ordinateur 😅")
-                    return "non_disponible"
+                    return "mode2"
 
 while True:
     choix_menu = afficher_menu_principal()
@@ -183,17 +197,45 @@ while True:
                                 jeu_fini = False
                             elif resultat == "menu":
                                 jeu_fini = True
+                        elif verifier_egalite():
+                            resultat = afficher_notification("égalité")
+                            if resultat == "rejouer":
+                                grille = [[None, None, None], [None, None, None], [None, None, None]]
+                                tour = "X"
+                                jeu_fini = False
+                            elif resultat == "menu":
+                                jeu_fini = True
                         tour = "O" if tour == "X" else "X"
+
+            if mode_de_jeu == "mode2" and tour == "O" and not jeu_fini:
+                row, col = coup_ordinateur()
+                grille[row][col] = "O"
+                if verifier_victoire():
+                    resultat = afficher_notification("O")
+                    if resultat == "rejouer":
+                        grille = [[None, None, None], [None, None, None], [None, None, None]]
+                        tour = "X"
+                        jeu_fini = False
+                    elif resultat == "menu":
+                        jeu_fini = True
+                elif verifier_egalite():
+                    resultat = afficher_notification("égalité")
+                    if resultat == "rejouer":
+                        grille = [[None, None, None], [None, None, None], [None, None, None]]
+                        tour = "X"
+                        jeu_fini = False
+                    elif resultat == "menu":
+                        jeu_fini = True
+                tour = "X"
             
             fenetre.fill((0, 0, 0))
             dessiner_grille()
             for row in range(3):
                 for col in range(3):
-                    if grille[row][col] is not None:
-                        pos_x = col * taille_fenetre // 3 + taille_fenetre // 6
-                        pos_y = row * taille_fenetre // 3 + taille_fenetre // 6
-                        font = pygame.font.Font(None, 80)
-                        texte = font.render(grille[row][col], True, (255, 255, 255))
-                        fenetre.blit(texte, (pos_x - texte.get_width() // 2, pos_y - texte.get_height() // 2))
+                    if grille[row][col] == "X":
+                        pygame.draw.line(fenetre, (255, 0, 0), (col * taille_fenetre // 3, row * taille_fenetre // 3), ((col + 1) * taille_fenetre // 3, (row + 1) * taille_fenetre // 3), 3)
+                        pygame.draw.line(fenetre, (255, 0, 0), ((col + 1) * taille_fenetre // 3, row * taille_fenetre // 3), (col * taille_fenetre // 3, (row + 1) * taille_fenetre // 3), 3)
+                    elif grille[row][col] == "O":
+                        pygame.draw.circle(fenetre, (0, 0, 255), (col * taille_fenetre // 3 + taille_fenetre // 6, row * taille_fenetre // 3 + taille_fenetre // 6), taille_fenetre // 6, 3)
+
             pygame.display.flip()
-            
